@@ -51,6 +51,17 @@ type UploadInput struct {
 	} `json:"input"`
 }
 
+type MultipleUploadInput struct {
+	Action struct {
+		Name string `json:"name"`
+	} `json:"action"`
+	Input struct {
+		Arg struct {
+			Images []string `json:"images"`
+		} `json:"arg"`
+	} `json:"input"`
+}
+
 func UpdateProfileImageHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get the file from the request
@@ -59,9 +70,7 @@ func UpdateProfileImageHandler() gin.HandlerFunc {
 		if err != nil {
 			log.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{
-				"success":           false,
-				"error":             "Invalid file",
-				"profile_image_url": nil,
+				"message": "Invalid file",
 			})
 			return
 		}
@@ -72,9 +81,7 @@ func UpdateProfileImageHandler() gin.HandlerFunc {
 		if err != nil {
 			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"success":           false,
-				"error":             "Error uploading file",
-				"profile_image_url": nil,
+				"message": "Error uploading file",
 			})
 			return
 		}
@@ -85,6 +92,42 @@ func UpdateProfileImageHandler() gin.HandlerFunc {
 			"success":           true,
 			"error":             nil,
 			"profile_image_url": profile_image_url,
+		})
+
+	}
+}
+
+func UploadImagesHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var images MultipleUploadInput
+		err := c.BindJSON(&images)
+		if err != nil {
+			log.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": "Invalid file",
+			})
+			return
+		}
+
+		var image_urls []string
+		for _, image := range images.Input.Arg.Images {
+			image_url, err := util.UploadFile(image, "minablog")
+			log.Println(image_url, err)
+
+			if err != nil {
+				log.Println(err)
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"message": "Error uploading file",
+				})
+				return
+			}
+			image_urls = append(image_urls, image_url)
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"success":    true,
+			"error":      nil,
+			"image_urls": image_urls,
 		})
 
 	}

@@ -16,7 +16,12 @@ type MyJWTClaims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(userId string) (string, error) {
+type VerificationClaims struct {
+	UserID string `json:"user_id"`
+	jwt.RegisteredClaims
+}
+
+func GenerateToken(userId string, role string) (string, error) {
 	mySigningKey := []byte(os.Getenv("JWT_SECRET_KEY"))
 
 	claims := MyJWTClaims{
@@ -25,8 +30,8 @@ func GenerateToken(userId string) (string, error) {
 			DefaultRole  string   `json:"x-hasura-default-role"`
 			UserID       string   `json:"x-hasura-user-id"`
 		}{
-			AllowedRoles: []string{"user"},
-			DefaultRole:  "user",
+			AllowedRoles: []string{"user", "admin"},
+			DefaultRole:  role,
 			UserID:       userId,
 		},
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -43,6 +48,37 @@ func GenerateToken(userId string) (string, error) {
 func VerifyToken(token string) (*MyJWTClaims, error) {
 	mySigningKey := []byte(os.Getenv("JWT_SECRET_KEY"))
 	claims := &MyJWTClaims{}
+	tkn, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return mySigningKey, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !tkn.Valid {
+		return nil, err
+	}
+	return claims, nil
+}
+
+func GenerateVerificationToken(user_id string) (string, error) {
+	mySigningKey := []byte(os.Getenv("JWT_SECRET_KEY"))
+
+	claims := VerificationClaims{
+		UserID: user_id,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			Issuer:    "Authenticator",
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	ss, err := token.SignedString(mySigningKey)
+	return ss, err
+}
+
+func VerifyVerificationToken(token string) (*VerificationClaims, error) {
+	mySigningKey := []byte(os.Getenv("JWT_SECRET_KEY"))
+	claims := &VerificationClaims{}
 	tkn, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		return mySigningKey, nil
 	})

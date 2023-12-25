@@ -13,4 +13,8 @@ func AuthRouteGroup(router *gin.Engine) *gin.RouterGroup {
 func AuthRouteSetup(routeGroup *gin.RouterGroup) {
 	routeGroup.POST("/login", handlers.LoginHandler())
 	routeGroup.POST("/register", handlers.RegisterHandler())
+
+	routeGroup.POST("/verify", handlers.VerifyEmailHandler())
+
+	routeGroup.POST("/resend/verification", handlers.ResendVerificationHandler())
 }

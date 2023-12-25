@@ -14,4 +14,7 @@ func RouteSetup(router *gin.Engine) {
 	userRouteGroup := UserRouteGroup(router)
 	userRouteGroup.Use(middleware.AuthMiddleware())
 	UserRouteSetup(userRouteGroup)
+
+	notificationRouteGroup := NotificationRouteGroup(router)
+	NotificationRouteSetup(notificationRouteGroup)
 }

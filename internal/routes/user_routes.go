@@ -15,4 +15,7 @@ func UserRouteSetup(routeGroup *gin.RouterGroup) {
 	routeGroup.POST("/me", handlers.GetUserHandler())
 
 	routeGroup.POST("/update/profile_image", handlers.UpdateProfileImageHandler())
+
+	routeGroup.POST("upload/images", handlers.UploadImagesHandler())
+
 }
